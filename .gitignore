@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated agent outputs
+backend/outputs/charts/*
+backend/outputs/reports/*
+!backend/outputs/charts/.gitkeep
+!backend/outputs/reports/.gitkeep
+
+# Uploaded datasets
+app/data/uploads/*
+!app/data/uploads/.gitkeep
+
+.vscode
