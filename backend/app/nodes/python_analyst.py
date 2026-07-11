@@ -55,7 +55,7 @@ def _correlation(df: pd.DataFrame) -> dict:
     pairs = []
     cols = corr.columns.tolist()
     for i, a in enumerate(cols):
-        for b in cols[i + 1 :]:
+        for b in cols[i + 1:]:
             r = corr.loc[a, b]
             if pd.notna(r) and abs(r) >= 0.3:
                 pairs.append({"a": a, "b": b, "r": float(r)})

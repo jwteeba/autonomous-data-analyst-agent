@@ -8,7 +8,7 @@ import pytest
 
 from app.nodes.cleaning import _detect_outliers_iqr
 from app.nodes.discovery import invalidate_cache
-from tests.conftest import StubDataSource, make_sample_df
+from tests.conftest import make_sample_df
 
 
 class TestDetectOutliersIqr:

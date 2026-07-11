@@ -5,13 +5,13 @@ from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from app.state import AgentState
+from app.nodes.discovery import get_sql_tool
 
+matplotlib.use("Agg")
 OUTPUT_DIR = Path(__file__).resolve().parents[2] / "outputs" / "charts"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -178,7 +178,6 @@ async def visualization_node(state: AgentState) -> AgentState:
     charts: list[dict] = []
 
     py = state.get("python_result", {}) or {}
-    from app.nodes.discovery import get_sql_tool
 
     df = get_sql_tool(state["dataset_source"]).as_dataframe()
 

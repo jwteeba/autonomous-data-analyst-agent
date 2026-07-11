@@ -6,7 +6,7 @@ import pytest
 
 from app.nodes.discovery import _cache_key, get_sql_tool, invalidate_cache
 from app.tools.sql_tool import SQLTool
-from tests.conftest import StubDataSource, make_sample_df
+from tests.conftest import make_sample_df
 
 
 class TestCacheKey:

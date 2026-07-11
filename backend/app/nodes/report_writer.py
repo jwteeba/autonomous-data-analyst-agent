@@ -28,7 +28,7 @@ def _render_markdown(state: AgentState) -> str:
     py = state.get("python_result", {}) or {}
 
     lines = []
-    lines.append(f"# Data Analysis Report\n")
+    lines.append("# Data Analysis Report\n")
     lines.append(f"**Question:** {state['question']}\n")
     lines.append(f"**Dataset:** {state.get('dataset_name', 'unnamed dataset')}  ")
     lines.append(

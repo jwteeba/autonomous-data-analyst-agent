@@ -6,9 +6,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +15,8 @@ from app.graph import agent_graph
 from app.llm import llm_client
 from app.nodes.discovery import invalidate_cache
 from app.tools.datasource import PostgresDataSource, _assert_readonly_sql
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"

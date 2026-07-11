@@ -1,7 +1,6 @@
 from __future__ import annotations
 import time
 
-import numpy as np
 import pandas as pd
 
 from app.nodes.discovery import get_sql_tool

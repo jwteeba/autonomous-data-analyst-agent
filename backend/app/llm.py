@@ -14,7 +14,6 @@ provider's SDK without touching any node code.
 from __future__ import annotations
 import json
 import os
-from typing import Any
 
 try:
     import httpx
