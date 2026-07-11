@@ -1,7 +1,7 @@
 duckdb==1.5.4
 fastapi==0.139.0
 uvicorn[standard]==0.51.0
-pandas==3.0.4
+pandas==3.0.2
 numpy==2.4.4
 scipy==1.17.1
 statsmodels==0.14.6
