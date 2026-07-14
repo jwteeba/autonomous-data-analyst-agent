@@ -1,4 +1,4 @@
-# Autonomous Data Analyst Agent — Backend Core
+# Autonomous Data Analyst Agent — Backend/Frontend
 
 A working LangGraph agent that takes a natural-language business question and
 a dataset — **sourced live from database** — and produces a grounded
@@ -99,7 +99,7 @@ are rejected immediately with a 400, not discovered later mid-analysis.
 File uploads (`POST /upload`) still work unchanged, for CSV/Excel/JSON/
 Parquet sources alongside your Postgres connections.
 
-## Pluggable LLM (unchanged, still important)
+## Pluggable LLM
 
 `app/llm.py` defines one `LLMClient.complete()` call used by the planner and
 insight generator. If `ANTHROPIC_API_KEY` is set, it calls the real
@@ -109,6 +109,41 @@ any API key — every fallback output says so explicitly.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+## Frontend (Streamlit)
+
+A Streamlit UI talks to the FastAPI backend entirely over HTTP — same API
+any other client would use, nothing frontend-specific baked into the
+backend.
+
+```bash
+cd frontend
+pip install -r requirements.txt
+export API_BASE_URL=http://localhost:8000   # wherever the backend is running
+streamlit run streamlit_app.py
+```
+
+Three tabs:
+
+- **Analyze** — pick a connected dataset, ask a business question, get the
+  full result: confidence badge, executive summary, findings/risks/
+  opportunities/recommendations, rendered charts, the exact SQL used, the
+  data-quality report, the full execution trace, and a report download.
+- **Connect Data** — upload a CSV/Excel/JSON/Parquet file, or connect a
+  Postgres table/query live (calls `POST /connect-database`, same
+  connection test and read-only validation as the API itself).
+- **History** — past analyses from `GET /history`; load any one back into
+  the same result view.
+
+## Frontend + backend together
+
+```bash
+# terminal 1
+cd backend && python -m uvicorn app.main:app --port 8000
+
+# terminal 2
+cd frontend && API_BASE_URL=http://localhost:8000 streamlit run streamlit_app.py
 ```
 
 ## Architecture notes / deliberate simplifications
@@ -127,31 +162,3 @@ export ANTHROPIC_API_KEY=sk-ant-...
 - **SQL generation without a live LLM**: falls back to a keyword-driven
   heuristic query builder. Real, tested, working SQL — just not free-form
   NL→SQL. Set `ANTHROPIC_API_KEY` for real NL→SQL generation.
-
-## Files
-
-```
-backend/
-  app/
-    main.py              FastAPI app + endpoints (/analyze, /connect-database, ...)
-    graph.py               LangGraph wiring
-    state.py                Shared agent state schema
-    llm.py                   Pluggable LLM client (live Anthropic / rule-based fallback)
-    nodes/
-      discovery.py           Dataset load + schema inference (source-agnostic)
-      planner.py               Intent classification
-      cleaning.py               Data quality report + date repair
-      sql_agent.py               NL/heuristic -> SQL -> validated execution
-      python_analyst.py          Descriptive stats, correlation, trend regression
-      visualization.py            Chart generation (matplotlib)
-      insights.py                  Executive summary, findings, risks, recommendations
-      report_writer.py              Markdown report assembly
-      reviewer.py                    Automated audit of the run
-    tools/
-      datasource.py                 DataSource abstraction: FileDataSource, PostgresDataSource
-      sql_tool.py                    DuckDB wrapper: load from any DataSource, validate, execute, repair
-    data/
-  requirements.txt
-  README.md
-```
-
