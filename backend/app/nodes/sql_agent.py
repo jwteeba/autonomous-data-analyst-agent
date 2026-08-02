@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import re
 import time
 
@@ -21,14 +22,24 @@ def _heuristic_query(question: str, columns: list[str]) -> tuple[str, str]:
     cols = set(columns)
     has = lambda c: c in cols  # noqa: E731
 
-    date_col = "order_date" if has("order_date") else next(
-        (c for c in columns if "date" in c.lower()), None
+    date_col = (
+        "order_date"
+        if has("order_date")
+        else next((c for c in columns if "date" in c.lower()), None)
     )
-    value_col = "revenue" if has("revenue") else next(
-        (c for c in columns if c.lower() in ("amount", "sales", "value")), None
+    value_col = (
+        "revenue"
+        if has("revenue")
+        else next(
+            (c for c in columns if c.lower() in ("amount", "sales", "value")), None
+        )
     )
 
-    if any(k in q for k in ["trend", "over time", "forecast", "month", "quarter"]) and date_col and value_col:
+    if (
+        any(k in q for k in ["trend", "over time", "forecast", "month", "quarter"])
+        and date_col
+        and value_col
+    ):
         sql = (
             f"SELECT date_trunc('month', CAST({date_col} AS TIMESTAMP)) AS month, "
             f"SUM({value_col}) AS total_{value_col}, COUNT(*) AS order_count "
@@ -60,7 +71,10 @@ def _heuristic_query(question: str, columns: list[str]) -> tuple[str, str]:
 
     if value_col:
         sql = f"SELECT * FROM dataset ORDER BY {value_col} DESC LIMIT 200"
-        return sql, "heuristic: no specific dimension detected -> top rows by value column"
+        return (
+            sql,
+            "heuristic: no specific dimension detected -> top rows by value column",
+        )
 
     return "SELECT * FROM dataset LIMIT 200", "heuristic: generic fallback sample"
 
@@ -70,12 +84,21 @@ async def sql_agent_node(state: AgentState) -> AgentState:
     trace = state.get("trace", [])
 
     if not state.get("plan", {}).get("needs_sql", True):
-        trace.append({"node": "sql_agent", "duration_ms": 0, "status": "skipped",
-                       "detail": "planner determined SQL was not needed"})
+        trace.append(
+            {
+                "node": "sql_agent",
+                "duration_ms": 0,
+                "status": "skipped",
+                "detail": "planner determined SQL was not needed",
+            }
+        )
         return {**state, "trace": trace}
 
     columns = [c["name"] for c in state["schema"]["columns"]]
-    llm_client = state["llm_client"]
+    if "llm_client" in state:
+        llm_client = state["llm_client"]
+    else:
+        from app.llm import llm_client
 
     if llm_client.live:
         raw_sql = await llm_client.complete(
@@ -88,16 +111,29 @@ async def sql_agent_node(state: AgentState) -> AgentState:
     else:
         sql, reasoning = _heuristic_query(state["question"], columns)
 
-    tool = state["sql_tool"]
+    tool = (
+        state["sql_tool"]
+        if "sql_tool" in state
+        else __import__("app.nodes.discovery", fromlist=["get_sql_tool"]).get_sql_tool(
+            state["dataset_source"]
+        )
+    )
     try:
         result = tool.run(sql)
-        status, detail = "ok", f"{reasoning}; {result['row_count']} rows in {result['execution_ms']}ms"
+        status, detail = (
+            "ok",
+            f"{reasoning}; {result['row_count']} rows in {result['execution_ms']}ms",
+        )
     except SQLValidationError as e:
         result = {"columns": [], "rows": [], "row_count": 0, "error": str(e)}
         status, detail = "error", str(e)
 
-    trace.append({
-        "node": "sql_agent", "duration_ms": round((time.time() - t0) * 1000, 1),
-        "status": status, "detail": detail,
-    })
+    trace.append(
+        {
+            "node": "sql_agent",
+            "duration_ms": round((time.time() - t0) * 1000, 1),
+            "status": status,
+            "detail": detail,
+        }
+    )
     return {**state, "sql_query": sql, "sql_result": result, "trace": trace}

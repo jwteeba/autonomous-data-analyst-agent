@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-
 from app.nodes.cleaning import _detect_outliers_iqr
 from app.nodes.discovery import invalidate_cache
 from tests.conftest import make_sample_df

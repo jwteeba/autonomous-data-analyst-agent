@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 import time
 
@@ -14,7 +15,10 @@ which capabilities are required. Respond ONLY with JSON:
 
 async def planner_node(state: AgentState) -> AgentState:
     t0 = time.time()
-    llm_client = state["llm_client"]
+    if "llm_client" in state:
+        llm_client = state["llm_client"]
+    else:
+        from app.llm import llm_client
     question = state["question"]
     schema = state.get("schema", {})
 
@@ -29,14 +33,21 @@ async def planner_node(state: AgentState) -> AgentState:
         plan = json.loads(raw)
     except json.JSONDecodeError:
         plan = {
-            "needs_sql": True, "needs_stats": True, "needs_forecast": "forecast" in question.lower(),
-            "needs_segmentation": False, "intent": "general_analysis",
+            "needs_sql": True,
+            "needs_stats": True,
+            "needs_forecast": "forecast" in question.lower(),
+            "needs_segmentation": False,
+            "intent": "general_analysis",
             "reasoning": "planner output was not valid JSON; defaulted to full pipeline",
         }
 
     trace = state.get("trace", [])
-    trace.append({
-        "node": "planner", "duration_ms": round((time.time() - t0) * 1000, 1),
-        "status": "ok", "detail": f"provider={llm_client.provider}, plan={plan}",
-    })
+    trace.append(
+        {
+            "node": "planner",
+            "duration_ms": round((time.time() - t0) * 1000, 1),
+            "status": "ok",
+            "detail": f"provider={llm_client.provider}, plan={plan}",
+        }
+    )
     return {**state, "plan": plan, "trace": trace}

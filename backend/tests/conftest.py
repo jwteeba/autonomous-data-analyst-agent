@@ -5,9 +5,9 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 from typing import Any
+
 import pandas as pd
 import pytest
-
 
 # Canonical sample DataFrame used across all tests
 
@@ -119,10 +119,9 @@ def tmp_parquet(tmp_path, sample_df) -> Path:
 @pytest.fixture
 def api_client(sql_tool):
     """TestClient with the sample_sales dataset replaced by the stub source."""
-    from httpx import ASGITransport, AsyncClient
-
     import app.main as main_module
     from app.nodes import discovery as disc
+    from httpx import ASGITransport, AsyncClient
 
     # Register stub in the discovery cache under the key main.py will use
     stub_descriptor = {

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
-
 from app.tools.sql_tool import SQLTool, SQLValidationError
 from tests.conftest import StubDataSource, make_sample_df
 

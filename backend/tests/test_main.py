@@ -12,7 +12,6 @@ import pandas as pd
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-
 from tests.conftest import make_sample_df
 
 

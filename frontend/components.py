@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 from io import BytesIO
 
 import streamlit as st
-
 from api import api_get_raw, fetch_image_bytes
 
 CSS = """

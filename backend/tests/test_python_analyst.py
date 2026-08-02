@@ -5,9 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-
-from app.nodes.python_analyst import _correlation, _descriptive_stats, _trend_regression
 from app.nodes.discovery import invalidate_cache
+from app.nodes.python_analyst import _correlation, _descriptive_stats, _trend_regression
 from tests.conftest import make_sample_df
 
 

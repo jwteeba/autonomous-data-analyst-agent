@@ -7,9 +7,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
-from app.nodes.insights import _fallback_insights
 from app.nodes.discovery import invalidate_cache
+from app.nodes.insights import _fallback_insights
 from tests.conftest import make_sample_df
 
 
@@ -185,8 +184,8 @@ class TestInsightsNode:
 
     @pytest.mark.asyncio
     async def test_falls_back_on_invalid_llm_json(self, tmp_path):
-        from app.nodes.insights import insights_node
         import app.llm as llm_mod
+        from app.nodes.insights import insights_node
 
         state = _complete_state(tmp_path)
         with patch.object(llm_mod.llm_client, "live", True), patch.object(

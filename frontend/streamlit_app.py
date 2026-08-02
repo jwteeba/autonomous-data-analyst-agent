@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import uuid
 from io import BytesIO
 
@@ -35,7 +36,8 @@ def _api_base_url() -> str:
 # treatment for anything code/data (SQL, trace, stats) so it reads as an
 # analytical instrument rather than a generic chat wrapper.
 # ---------------------------------------------------------------------------
-st.markdown("""
+st.markdown(
+    """
 <style>
     .stApp { font-feature-settings: "tnum"; }
     .agent-card {
@@ -70,7 +72,9 @@ st.markdown("""
     .trace-skipped { color: #9CA3AF; }
     code, pre { font-size: 0.85rem !important; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +83,7 @@ st.markdown("""
 # from session state at call time, so changing it in the sidebar takes
 # effect immediately without restarting the app.
 # ---------------------------------------------------------------------------
+
 
 def api_get(path: str, timeout: int = 10):
     try:
@@ -136,11 +141,14 @@ def api_get_raw(path: str) -> str | None:
 # renders identically whether it's fresh or pulled from history.
 # ---------------------------------------------------------------------------
 
+
 def render_analysis(record: dict, key_prefix: str = "analyze"):
     insights = record.get("insights") or {}
     confidence = (insights.get("confidence_level") or "unknown").lower()
     badge_class = {
-        "high": "confidence-high", "medium": "confidence-medium", "low": "confidence-low",
+        "high": "confidence-high",
+        "medium": "confidence-medium",
+        "low": "confidence-low",
     }.get(confidence, "confidence-medium")
 
     st.markdown(
@@ -150,45 +158,60 @@ def render_analysis(record: dict, key_prefix: str = "analyze"):
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="agent-eyebrow">Executive Summary</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="agent-eyebrow">Executive Summary</div>', unsafe_allow_html=True
+    )
     st.write(insights.get("executive_summary", "No summary generated."))
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown('<div class="agent-card">', unsafe_allow_html=True)
-        st.markdown('<div class="agent-eyebrow">Key Findings</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="agent-eyebrow">Key Findings</div>', unsafe_allow_html=True
+        )
         for f in insights.get("key_findings", []):
             st.markdown(f"- {f}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown('<div class="agent-card">', unsafe_allow_html=True)
-        st.markdown('<div class="agent-eyebrow">Opportunities</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="agent-eyebrow">Opportunities</div>', unsafe_allow_html=True
+        )
         for o in insights.get("opportunities", []):
             st.markdown(f"- {o}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
         st.markdown('<div class="agent-card">', unsafe_allow_html=True)
         st.markdown('<div class="agent-eyebrow">Risks</div>', unsafe_allow_html=True)
         for r in insights.get("risks", []):
             st.markdown(f"- {r}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown('<div class="agent-card">', unsafe_allow_html=True)
-        st.markdown('<div class="agent-eyebrow">Recommendations</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="agent-eyebrow">Recommendations</div>', unsafe_allow_html=True
+        )
         for r in insights.get("recommendations", []):
             st.markdown(f"- {r}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     charts = record.get("charts") or []
     if charts:
-        st.markdown('<div class="agent-eyebrow" style="margin-top:0.5rem;">Charts</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="agent-eyebrow" style="margin-top:0.5rem;">Charts</div>',
+            unsafe_allow_html=True,
+        )
         chart_cols = st.columns(2)
         for i, c in enumerate(charts):
             img_bytes = fetch_image_bytes(c["url"])
             with chart_cols[i % 2]:
                 if img_bytes:
-                    st.image(BytesIO(img_bytes), caption=c.get("caption", ""), width="stretch")
+                    st.image(
+                        BytesIO(img_bytes),
+                        caption=c.get("caption", ""),
+                        width="stretch",
+                    )
                 else:
                     st.warning(f"Could not load chart: {c.get('title')}")
 
@@ -199,7 +222,10 @@ def render_analysis(record: dict, key_prefix: str = "analyze"):
     with st.expander("Data quality report"):
         st.write(f"Duplicate rows: {cleaning.get('duplicate_rows', 0)}")
         if cleaning.get("auto_repaired"):
-            st.info(cleaning["auto_repaired"]["action"] + f" — {cleaning['auto_repaired']['rows_repaired_by_column']}")
+            st.info(
+                cleaning["auto_repaired"]["action"]
+                + f" — {cleaning['auto_repaired']['rows_repaired_by_column']}"
+            )
         if cleaning.get("columns"):
             st.json(cleaning["columns"])
         else:
@@ -207,8 +233,12 @@ def render_analysis(record: dict, key_prefix: str = "analyze"):
 
     with st.expander("Execution trace"):
         for t in record.get("trace", []):
-            css = {"ok": "trace-ok", "flagged": "trace-flagged",
-                   "error": "trace-error", "skipped": "trace-skipped"}.get(t["status"], "")
+            css = {
+                "ok": "trace-ok",
+                "flagged": "trace-flagged",
+                "error": "trace-error",
+                "skipped": "trace-skipped",
+            }.get(t["status"], "")
             st.markdown(
                 f'`{t["node"]}` — <span class="{css}">{t["status"]}</span> — '
                 f'{t["duration_ms"]}ms — {t["detail"]}',
@@ -246,15 +276,19 @@ with st.sidebar:
     st.divider()
     st.markdown("**LLM credentials**")
     st.text_input(
-        "Anthropic API key", key="anthropic_api_key", type="password",
+        "Anthropic API key",
+        key="anthropic_api_key",
+        type="password",
         placeholder="sk-ant-...",
     )
     st.text_input("Anthropic model", key="anthropic_model")
     if st.session_state["anthropic_api_key"]:
         st.caption("Live Anthropic calls enabled for this session.")
     else:
-        st.caption("No key set — analyses will use the rule-based fallback "
-                    "(still fully functional, just not LLM-written prose).")
+        st.caption(
+            "No key set — analyses will use the rule-based fallback "
+            "(still fully functional, just not LLM-written prose)."
+        )
 
     st.divider()
     st.caption(
@@ -277,22 +311,27 @@ with tab_analyze:
     datasets = st.session_state["datasets"]
 
     if not datasets:
-        st.info("No datasets connected yet. Go to the **Connect Data** tab to "
-                 "upload a file or connect a Postgres database — there's no "
-                 "default dataset in this app.")
+        st.info(
+            "No datasets connected yet. Go to the **Connect Data** tab to "
+            "upload a file or connect a Postgres database — there's no "
+            "default dataset in this app."
+        )
     else:
         col_q, col_d = st.columns([3, 1])
         with col_d:
             local_ids = list(datasets.keys())
             selected_local_id = st.selectbox(
-                "Dataset", options=local_ids,
+                "Dataset",
+                options=local_ids,
                 format_func=lambda lid: datasets[lid]["name"],
             )
             selected = datasets[selected_local_id]
             src = selected["source"]
             if src["type"] == "postgres":
-                st.caption(f"Source: postgres · {src['host']}/{src['database']}."
-                           f"{src.get('table') or '(custom query)'}")
+                st.caption(
+                    f"Source: postgres · {src['host']}/{src['database']}."
+                    f"{src.get('table') or '(custom query)'}"
+                )
             else:
                 st.caption("Source: uploaded file")
 
@@ -308,12 +347,15 @@ with tab_analyze:
             if not question.strip():
                 st.warning("Enter a question first.")
             else:
-                with st.spinner("Planning, cleaning, querying, analyzing, charting, and writing the report..."):
+                with st.spinner(
+                    "Planning, cleaning, querying, analyzing, charting, and writing the report..."
+                ):
                     payload = {
                         "question": question,
                         "dataset_name": selected["name"],
                         "dataset_source": src,
-                        "anthropic_api_key": st.session_state["anthropic_api_key"] or None,
+                        "anthropic_api_key": st.session_state["anthropic_api_key"]
+                        or None,
                         "anthropic_model": st.session_state["anthropic_model"] or None,
                     }
                     record, err = api_post("/analyze", json=payload)
@@ -337,29 +379,38 @@ with tab_connect:
     with col_file:
         st.subheader("Upload a file")
         st.caption("CSV, Excel, JSON, or Parquet")
-        uploaded = st.file_uploader("Choose a file", type=["csv", "xlsx", "xls", "json", "parquet"])
+        uploaded = st.file_uploader(
+            "Choose a file", type=["csv", "xlsx", "xls", "json", "parquet"]
+        )
         if uploaded is not None and st.button("Upload", key="upload_btn"):
             with st.spinner("Uploading..."):
                 try:
                     files = {"file": (uploaded.name, uploaded.getvalue())}
-                    r = requests.post(f"{_api_base_url()}/upload", files=files, timeout=60)
+                    r = requests.post(
+                        f"{_api_base_url()}/upload", files=files, timeout=60
+                    )
                     r.raise_for_status()
                     resp = r.json()
                     local_id = uuid.uuid4().hex[:8]
                     st.session_state["datasets"][local_id] = {
-                        "name": resp["name"], "source": resp["source"],
+                        "name": resp["name"],
+                        "source": resp["source"],
                     }
-                    st.success(f"Uploaded and added to your dataset list: {resp['name']}")
+                    st.success(
+                        f"Uploaded and added to your dataset list: {resp['name']}"
+                    )
                     st.rerun()
                 except requests.exceptions.RequestException as e:
                     st.error(f"Upload failed: {e}")
 
     with col_db:
         st.subheader("Connect a Postgres database")
-        st.caption("Tested immediately, never stored server-side — the "
-                    "connection details (including the password) are kept "
-                    "only in this browser session and sent again with each "
-                    "question you ask.")
+        st.caption(
+            "Tested immediately, never stored server-side — the "
+            "connection details (including the password) are kept "
+            "only in this browser session and sent again with each "
+            "question you ask."
+        )
         with st.form("connect_db_form"):
             name = st.text_input("Display name", placeholder="e.g. Production Orders")
             db_col1, db_col2 = st.columns(2)
@@ -369,7 +420,9 @@ with tab_connect:
                 user = st.text_input("User")
             with db_col2:
                 port = st.number_input("Port", value=5432, step=1)
-                table_or_query = st.radio("Source", ["Table", "Custom query"], horizontal=True)
+                table_or_query = st.radio(
+                    "Source", ["Table", "Custom query"], horizontal=True
+                )
                 password = st.text_input("Password", type="password")
 
             if table_or_query == "Table":
@@ -377,14 +430,21 @@ with tab_connect:
                 query = None
             else:
                 table = None
-                query = st.text_area("Read-only SQL query (SELECT/WITH only)", height=80)
+                query = st.text_area(
+                    "Read-only SQL query (SELECT/WITH only)", height=80
+                )
 
-            submitted = st.form_submit_button("Test & Connect", type="primary", width="stretch")
+            submitted = st.form_submit_button(
+                "Test & Connect", type="primary", width="stretch"
+            )
 
             if submitted:
                 test_payload = {
-                    "host": host, "port": int(port), "database": database,
-                    "user": user, "password": password,
+                    "host": host,
+                    "port": int(port),
+                    "database": database,
+                    "user": user,
+                    "password": password,
                 }
                 if table:
                     test_payload["table"] = table
@@ -397,15 +457,24 @@ with tab_connect:
                 else:
                     local_id = uuid.uuid4().hex[:8]
                     source = {
-                        "type": "postgres", "host": host, "port": int(port), "database": database,
-                        "user": user, "password": password, "table": table, "query": query,
+                        "type": "postgres",
+                        "host": host,
+                        "port": int(port),
+                        "database": database,
+                        "user": user,
+                        "password": password,
+                        "table": table,
+                        "query": query,
                         "db_schema": "public",
                     }
                     st.session_state["datasets"][local_id] = {
-                        "name": name or f"{database}.{table or 'query'}", "source": source,
+                        "name": name or f"{database}.{table or 'query'}",
+                        "source": source,
                     }
-                    st.success(f"Connected and added to your dataset list: "
-                               f"{st.session_state['datasets'][local_id]['name']}")
+                    st.success(
+                        f"Connected and added to your dataset list: "
+                        f"{st.session_state['datasets'][local_id]['name']}"
+                    )
                     st.rerun()
 
     st.divider()
@@ -415,8 +484,12 @@ with tab_connect:
     else:
         for local_id, d in list(st.session_state["datasets"].items()):
             src = d["source"]
-            detail = "uploaded file" if src["type"] == "file" else (
-                f"postgres · {src['host']}/{src['database']}.{src.get('table') or '(custom query)'}"
+            detail = (
+                "uploaded file"
+                if src["type"] == "file"
+                else (
+                    f"postgres · {src['host']}/{src['database']}.{src.get('table') or '(custom query)'}"
+                )
             )
             row_col1, row_col2 = st.columns([5, 1])
             with row_col1:
@@ -441,7 +514,9 @@ with tab_history:
             st.caption("No analyses run yet.")
         else:
             for a in reversed(analyses):
-                with st.expander(f"{a['question']}  ·  {a['dataset_name']}  ·  {a['elapsed_seconds']}s"):
+                with st.expander(
+                    f"{a['question']}  ·  {a['dataset_name']}  ·  {a['elapsed_seconds']}s"
+                ):
                     if st.button("Load full result", key=f"load_{a['id']}"):
                         record, rec_err = api_get(f"/analysis/{a['id']}")
                         if rec_err:
@@ -450,4 +525,6 @@ with tab_history:
                             st.session_state["history_result"] = record
 
                     if st.session_state.get("history_result", {}).get("id") == a["id"]:
-                        render_analysis(st.session_state["history_result"], key_prefix="history")
+                        render_analysis(
+                            st.session_state["history_result"], key_prefix="history"
+                        )

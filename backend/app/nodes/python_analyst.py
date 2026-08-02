@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 import time
 
 import numpy as np
 import pandas as pd
-from scipy import stats as scipy_stats
-
 from app.state import AgentState
+from scipy import stats as scipy_stats
 
 
 def _descriptive_stats(df: pd.DataFrame) -> dict:
@@ -67,20 +67,25 @@ def _trend_regression(df: pd.DataFrame, date_col: str, value_col: str) -> dict |
     # simple 3-month forecast by extrapolating the linear trend
     future_x = np.arange(len(monthly), len(monthly) + 3)
     forecast_values = intercept + slope * future_x
-    future_index = pd.date_range(monthly.index[-1] + pd.DateOffset(months=1), periods=3, freq="MS")
+    future_index = pd.date_range(
+        monthly.index[-1] + pd.DateOffset(months=1), periods=3, freq="MS"
+    )
 
     return {
-        "monthly_series": {str(k.date()): round(float(v), 2) for k, v in monthly.items()},
+        "monthly_series": {
+            str(k.date()): round(float(v), 2) for k, v in monthly.items()
+        },
         "slope_per_month": round(float(slope), 2),
         "slope_95ci": [round(float(slope_ci[0]), 2), round(float(slope_ci[1]), 2)],
-        "r_squared": round(float(r_value ** 2), 3),
+        "r_squared": round(float(r_value**2), 3),
         "p_value": float(p_value),
         "statistically_significant_trend": bool(p_value < 0.05),
         "forecast_next_3_months": {
-            str(k.date()): round(float(v), 2) for k, v in zip(future_index, forecast_values)
+            str(k.date()): round(float(v), 2)
+            for k, v in zip(future_index, forecast_values)
         },
         "method": "OLS linear trend on monthly aggregates (statsmodels/scipy linregress); "
-                  "adequate for a short horizon, not a substitute for seasonal models on longer series.",
+        "adequate for a short horizon, not a substitute for seasonal models on longer series.",
     }
 
 
@@ -95,7 +100,13 @@ async def python_analyst_node(state: AgentState) -> AgentState:
         trace.append({"node": "python_analyst", "duration_ms": 0, "status": "skipped"})
         return {**state, "trace": trace}
 
-    tool = state["sql_tool"]
+    tool = (
+        state["sql_tool"]
+        if "sql_tool" in state
+        else __import__("app.nodes.discovery", fromlist=["get_sql_tool"]).get_sql_tool(
+            state["dataset_source"]
+        )
+    )
     df = tool.as_dataframe()
 
     result: dict = {"descriptive_stats": _descriptive_stats(df)}
@@ -103,7 +114,11 @@ async def python_analyst_node(state: AgentState) -> AgentState:
     if plan.get("needs_stats", True):
         result["correlation"] = _correlation(df)
 
-    if plan.get("needs_forecast") or "revenue" in state["question"].lower() or "trend" in state["question"].lower():
+    if (
+        plan.get("needs_forecast")
+        or "revenue" in state["question"].lower()
+        or "trend" in state["question"].lower()
+    ):
         date_col = "order_date" if "order_date" in df.columns else None
         value_col = "revenue" if "revenue" in df.columns else None
         if date_col and value_col:
@@ -111,10 +126,13 @@ async def python_analyst_node(state: AgentState) -> AgentState:
             if trend:
                 result["trend_and_forecast"] = trend
 
-    trace.append({
-        "node": "python_analyst", "duration_ms": round((time.time() - t0) * 1000, 1),
-        "status": "ok",
-        "detail": f"computed stats over {len(df)} rows; "
-                  f"keys={list(result.keys())}",
-    })
+    trace.append(
+        {
+            "node": "python_analyst",
+            "duration_ms": round((time.time() - t0) * 1000, 1),
+            "status": "ok",
+            "detail": f"computed stats over {len(df)} rows; "
+            f"keys={list(result.keys())}",
+        }
+    )
     return {**state, "python_result": result, "trace": trace}

@@ -6,14 +6,13 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
+from app.nodes.discovery import invalidate_cache
 from app.nodes.visualization import (
     _chart_bar,
     _chart_correlation_heatmap,
     _chart_trend_with_forecast,
     _save,
 )
-from app.nodes.discovery import invalidate_cache
 from tests.conftest import make_sample_df
 
 
@@ -195,8 +194,8 @@ class TestVisualizationNode:
 
     @pytest.mark.asyncio
     async def test_generates_trend_chart_when_trend_present(self, tmp_path):
-        from app.nodes.visualization import visualization_node
         from app.nodes.python_analyst import _trend_regression
+        from app.nodes.visualization import visualization_node
 
         df = make_sample_df()
         trend = _trend_regression(df, "order_date", "revenue")

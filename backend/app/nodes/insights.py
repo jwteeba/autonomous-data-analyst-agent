@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 import time
 
@@ -30,7 +31,11 @@ def _fallback_insights(state: AgentState) -> dict:
 
     if trend:
         direction = "increasing" if trend["slope_per_month"] > 0 else "decreasing"
-        sig = "a statistically significant" if trend["statistically_significant_trend"] else "a not statistically significant (p>=0.05)"
+        sig = (
+            "a statistically significant"
+            if trend["statistically_significant_trend"]
+            else "a not statistically significant (p>=0.05)"
+        )
         findings.append(
             f"Revenue shows {sig} monthly trend of {trend['slope_per_month']:+.2f} "
             f"per month (R²={trend['r_squared']}), i.e. revenue is {direction}."
@@ -41,26 +46,38 @@ def _fallback_insights(state: AgentState) -> dict:
 
     notable = py.get("correlation", {}).get("notable_pairs", [])
     for pair in notable[:3]:
-        findings.append(f"Correlation between {pair['a']} and {pair['b']}: r={pair['r']}")
+        findings.append(
+            f"Correlation between {pair['a']} and {pair['b']}: r={pair['r']}"
+        )
 
     risks = []
     if cleaning.get("duplicate_rows"):
-        risks.append(f"{cleaning['duplicate_rows']} duplicate rows detected in source data; "
-                      "confirm this isn't inflating totals.")
+        risks.append(
+            f"{cleaning['duplicate_rows']} duplicate rows detected in source data; "
+            "confirm this isn't inflating totals."
+        )
     for col, issues in cleaning.get("columns", {}).items():
         if "impossible_negative_values" in issues:
-            risks.append(f"Column '{col}' has {issues['impossible_negative_values']} impossible negative values.")
+            risks.append(
+                f"Column '{col}' has {issues['impossible_negative_values']} impossible negative values."
+            )
         if "outliers_iqr_method" in issues:
-            risks.append(f"Column '{col}' has {issues['outliers_iqr_method']} statistical outliers (IQR method) "
-                         "that may distort aggregates.")
+            risks.append(
+                f"Column '{col}' has {issues['outliers_iqr_method']} statistical outliers (IQR method) "
+                "that may distort aggregates."
+            )
 
     opportunities = []
     if trend and trend["slope_per_month"] > 0:
-        opportunities.append("Positive revenue trend suggests current strategy is working; "
-                              "consider reallocating budget toward the top-performing segment shown in the chart.")
+        opportunities.append(
+            "Positive revenue trend suggests current strategy is working; "
+            "consider reallocating budget toward the top-performing segment shown in the chart."
+        )
     elif trend:
-        opportunities.append("Declining/flat trend warrants investigating the top vs. bottom "
-                              "performing segments to identify what changed.")
+        opportunities.append(
+            "Declining/flat trend warrants investigating the top vs. bottom "
+            "performing segments to identify what changed."
+        )
 
     recommendations = [
         "Validate the flagged data-quality issues (duplicates/outliers) before using these "
@@ -77,11 +94,14 @@ def _fallback_insights(state: AgentState) -> dict:
 
     return {
         "executive_summary": "[rule-based fallback — no live LLM configured] "
-                              "Summary generated directly from computed SQL and statistical results below; "
-                              "add an Anthropic API key in the sidebar for narrative-quality prose.",
-        "key_findings": findings or ["No specific numeric findings were computed for this question."],
-        "risks": risks or ["No material data-quality risks detected in the automated checks."],
-        "opportunities": opportunities or ["Insufficient trend data to identify a specific opportunity."],
+        "Summary generated directly from computed SQL and statistical results below; "
+        "add an Anthropic API key in the sidebar for narrative-quality prose.",
+        "key_findings": findings
+        or ["No specific numeric findings were computed for this question."],
+        "risks": risks
+        or ["No material data-quality risks detected in the automated checks."],
+        "opportunities": opportunities
+        or ["Insufficient trend data to identify a specific opportunity."],
         "recommendations": recommendations,
         "confidence_level": confidence,
         "confidence_reason": "Based on R² of the trend fit and presence/absence of data-quality flags.",
@@ -90,7 +110,10 @@ def _fallback_insights(state: AgentState) -> dict:
 
 async def insights_node(state: AgentState) -> AgentState:
     t0 = time.time()
-    llm_client = state["llm_client"]
+    if "llm_client" in state:
+        llm_client = state["llm_client"]
+    else:
+        from app.llm import llm_client
     trace = state.get("trace", [])
 
     payload = {
@@ -101,17 +124,26 @@ async def insights_node(state: AgentState) -> AgentState:
     }
 
     if llm_client.live:
-        raw = await llm_client.complete(SYSTEM, json.dumps(payload, default=str), json_mode=True, max_tokens=900)
+        raw = await llm_client.complete(
+            SYSTEM, json.dumps(payload, default=str), json_mode=True, max_tokens=900
+        )
         try:
             insights = json.loads(raw)
         except json.JSONDecodeError:
             insights = _fallback_insights(state)
-            insights["executive_summary"] = "[LLM returned invalid JSON, used grounded fallback] " + insights["executive_summary"]
+            insights["executive_summary"] = (
+                "[LLM returned invalid JSON, used grounded fallback] "
+                + insights["executive_summary"]
+            )
     else:
         insights = _fallback_insights(state)
 
-    trace.append({
-        "node": "insight_generation", "duration_ms": round((time.time() - t0) * 1000, 1),
-        "status": "ok", "detail": f"provider={llm_client.provider}, confidence={insights.get('confidence_level')}",
-    })
+    trace.append(
+        {
+            "node": "insight_generation",
+            "duration_ms": round((time.time() - t0) * 1000, 1),
+            "status": "ok",
+            "detail": f"provider={llm_client.provider}, confidence={insights.get('confidence_level')}",
+        }
+    )
     return {**state, "insights": insights, "trace": trace}

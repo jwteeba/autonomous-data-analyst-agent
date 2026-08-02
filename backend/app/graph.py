@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from langgraph.graph import StateGraph, END
-
 from app.nodes.cleaning import cleaning_node
 from app.nodes.discovery import discovery_node
 from app.nodes.insights import insights_node
@@ -12,6 +10,7 @@ from app.nodes.reviewer import reviewer_node
 from app.nodes.sql_agent import sql_agent_node
 from app.nodes.visualization import visualization_node
 from app.state import AgentState
+from langgraph.graph import END, StateGraph
 
 
 def build_graph():

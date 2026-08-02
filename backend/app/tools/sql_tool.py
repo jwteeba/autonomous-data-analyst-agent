@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 import re
 import time
 from typing import Any
 
 import duckdb
 import pandas as pd
-
 from app.tools.datasource import DataSource
 
 # Statements that mutate data or schema. The agent operates read-only on a

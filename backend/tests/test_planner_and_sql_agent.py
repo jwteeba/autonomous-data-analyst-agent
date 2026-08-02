@@ -6,7 +6,6 @@ import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
-
 from app.nodes.discovery import invalidate_cache
 from app.nodes.sql_agent import _heuristic_query
 from tests.conftest import make_sample_df
@@ -56,8 +55,8 @@ class TestPlannerNode:
 
     @pytest.mark.asyncio
     async def test_fallback_on_invalid_json_from_llm(self, tmp_path):
-        from app.nodes.planner import planner_node
         import app.llm as llm_mod
+        from app.nodes.planner import planner_node
 
         state = _make_state(tmp_path, question="forecast next quarter")
         with patch.object(
@@ -176,8 +175,8 @@ class TestSqlAgentNode:
 
     @pytest.mark.asyncio
     async def test_handles_invalid_llm_sql_gracefully(self, tmp_path):
-        from app.nodes.sql_agent import sql_agent_node
         import app.llm as llm_mod
+        from app.nodes.sql_agent import sql_agent_node
 
         state = _make_state(tmp_path)
         with patch.object(llm_mod.llm_client, "live", True), patch.object(
