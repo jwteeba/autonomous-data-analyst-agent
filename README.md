@@ -1,5 +1,7 @@
 # Autonomous Data Analyst Agent — Backend/Frontend
 
+[See it in Action](https://jwteeba-autonomous-data-analyst-ag-frontendstreamlit-app-w1wlsz.streamlit.app)
+
 A working LangGraph agent that takes a natural-language business question and
 a dataset — **sourced live from database** — and produces a grounded
 analysis: generated SQL, real statistics, real charts, and a Markdown report,
